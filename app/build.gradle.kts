@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.jaredsburrows.license")
+    id("com.jaredsburrows.license") version "0.9.1"
 }
 
 android {
@@ -21,7 +21,7 @@ android {
             abi {
                 isEnable = true
                 reset()
-                if (abiFilterList != null && abiFilterList.isNotEmpty()) {
+                if (!abiFilterList.isNullOrEmpty()) {
                     include(*abiFilterList.toTypedArray())
                 } else {
                     include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
@@ -56,38 +56,43 @@ android {
         }
     }
 
-    sourceSets["main"].jniLibs.srcDirs("libs")
+    sourceSets {
+        getByName("main") {
+            jniLibs.srcDirs("libs")
+        }
+    }
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     applicationVariants.all {
-        val isFdroid = it.productFlavors.any { flavor -> flavor.name == "fdroid" }
+        val variant = this
+        val isFdroid = variant.productFlavors.any { it.name == "fdroid" }
+
         val versionCodes = if (isFdroid) {
             mapOf("armeabi-v7a" to 2, "arm64-v8a" to 1, "x86" to 4, "x86_64" to 3, "universal" to 0)
         } else {
             mapOf("armeabi-v7a" to 4, "arm64-v8a" to 4, "x86" to 4, "x86_64" to 4, "universal" to 4)
         }
 
-        it.outputs
-            .map { out -> out as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
+        variant.outputs
+            .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
             .forEach { output ->
                 val abi = output.getFilter("ABI") ?: "universal"
                 output.outputFileName =
-                    if (isFdroid) "v2rayNG_${it.versionName}-fdroid_${abi}.apk"
-                    else "v2rayNG_${it.versionName}_${abi}.apk"
-
-                versionCodes[abi]?.let { code ->
-                    output.versionCodeOverride =
-                        if (isFdroid) (100 * it.versionCode + code + 5000000)
-                        else (1000000 * code + it.versionCode)
-                }
+                    "v2rayNG_${variant.versionName}${if (isFdroid) "-fdroid" else ""}_${abi}.apk"
+                output.versionCodeOverride =
+                    if (isFdroid)
+                        (100 * variant.versionCode + versionCodes[abi]!!).plus(5000000)
+                    else
+                        (1000000 * versionCodes[abi]!!).plus(variant.versionCode)
             }
     }
 
@@ -102,9 +107,8 @@ android {
 }
 
 dependencies {
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar", "*.jar"))))
+    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
 
-    // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
@@ -113,47 +117,37 @@ dependencies {
     implementation(libs.recyclerview)
     implementation(libs.androidx.swiperefreshlayout)
 
-    // Material Design & UI
     implementation(libs.material)
     implementation(libs.toasty)
     implementation(libs.editorkit)
     implementation(libs.flexbox)
 
-    // Storage & Data
     implementation(libs.mmkv.static)
-    implementation("com.google.code.gson:gson:2.9.0")
+    implementation(libs.gson)
 
-    // Kotlin Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.core)
 
-    // Language tools
     implementation(libs.language.base)
     implementation(libs.language.json)
 
-    // Utility
     implementation(libs.quickie.foss)
     implementation(libs.core)
 
-    // Lifecycle
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.lifecycle.runtime.ktx)
 
-    // WorkManager
     implementation(libs.work.runtime.ktx)
     implementation(libs.work.multiprocess)
 
-    // Multidex
     implementation(libs.multidex)
 
-    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     testImplementation(libs.org.mockito.mockito.inline)
     testImplementation(libs.mockito.kotlin)
 
-    // Java 8+ API support
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
