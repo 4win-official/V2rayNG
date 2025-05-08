@@ -8,6 +8,7 @@ plugins {
 buildscript {
     dependencies {
         classpath(libs.gradle.license.plugin)
+implementation 'com.google.code.gson:gson:2.9.0'
     }
 }
 
