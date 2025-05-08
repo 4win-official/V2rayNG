@@ -24,12 +24,7 @@ android {
                 if (abiFilterList != null && abiFilterList.isNotEmpty()) {
                     include(*abiFilterList.toTypedArray())
                 } else {
-                    include(
-                        "arm64-v8a",
-                        "armeabi-v7a",
-                        "x86_64",
-                        "x86"
-                    )
+                    include("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
                 }
                 isUniversalApk = abiFilterList.isNullOrEmpty()
             }
@@ -48,7 +43,7 @@ android {
         }
     }
 
-    flavorDimensions.add("distribution")
+    flavorDimensions += "distribution"
     productFlavors {
         create("fdroid") {
             dimension = "distribution"
@@ -61,12 +56,7 @@ android {
         }
     }
 
-    sourceSets {
-        getByName("main") {
-            jniLibs.srcDirs("libs")
-        }
-    }
-
+    sourceSets["main"].jniLibs.srcDirs("libs")
 
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
@@ -78,47 +68,27 @@ android {
     }
 
     applicationVariants.all {
-        val variant = this
-        val isFdroid = variant.productFlavors.any { it.name == "fdroid" }
-        if (isFdroid) {
-            val versionCodes =
-                mapOf(
-                    "armeabi-v7a" to 2, "arm64-v8a" to 1, "x86" to 4, "x86_64" to 3, "universal" to 0
-                )
-
-            variant.outputs
-                .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
-                .forEach { output ->
-                    val abi = output.getFilter("ABI") ?: "universal"
-                    output.outputFileName = "v2rayNG_${variant.versionName}-fdroid_${abi}.apk"
-                    if (versionCodes.containsKey(abi)) {
-                        output.versionCodeOverride =
-                            (100 * variant.versionCode + versionCodes[abi]!!).plus(5000000)
-                    } else {
-                        return@forEach
-                    }
-                }
+        val isFdroid = it.productFlavors.any { flavor -> flavor.name == "fdroid" }
+        val versionCodes = if (isFdroid) {
+            mapOf("armeabi-v7a" to 2, "arm64-v8a" to 1, "x86" to 4, "x86_64" to 3, "universal" to 0)
         } else {
-            val versionCodes =
-                mapOf("armeabi-v7a" to 4, "arm64-v8a" to 4, "x86" to 4, "x86_64" to 4, "universal" to 4)
-
-            variant.outputs
-                .map { it as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
-                .forEach { output ->
-                    val abi = if (output.getFilter("ABI") != null)
-                        output.getFilter("ABI")
-                    else
-                        "universal"
-
-                    output.outputFileName = "v2rayNG_${variant.versionName}_${abi}.apk"
-                    if (versionCodes.containsKey(abi)) {
-                        output.versionCodeOverride =
-                            (1000000 * versionCodes[abi]!!).plus(variant.versionCode)
-                    } else {
-                        return@forEach
-                    }
-                }
+            mapOf("armeabi-v7a" to 4, "arm64-v8a" to 4, "x86" to 4, "x86_64" to 4, "universal" to 4)
         }
+
+        it.outputs
+            .map { out -> out as com.android.build.gradle.internal.api.ApkVariantOutputImpl }
+            .forEach { output ->
+                val abi = output.getFilter("ABI") ?: "universal"
+                output.outputFileName =
+                    if (isFdroid) "v2rayNG_${it.versionName}-fdroid_${abi}.apk"
+                    else "v2rayNG_${it.versionName}_${abi}.apk"
+
+                versionCodes[abi]?.let { code ->
+                    output.versionCodeOverride =
+                        if (isFdroid) (100 * it.versionCode + code + 5000000)
+                        else (1000000 * code + it.versionCode)
+                }
+            }
     }
 
     buildFeatures {
@@ -127,18 +97,14 @@ android {
     }
 
     packaging {
-        jniLibs {
-            useLegacyPackaging = true
-        }
+        jniLibs.useLegacyPackaging = true
     }
-
 }
 
 dependencies {
-    // Core Libraries
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.aar", "*.jar"))))
 
-    // AndroidX Core Libraries
+    // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)
@@ -147,45 +113,47 @@ dependencies {
     implementation(libs.recyclerview)
     implementation(libs.androidx.swiperefreshlayout)
 
-    // UI Libraries
+    // Material Design & UI
     implementation(libs.material)
     implementation(libs.toasty)
     implementation(libs.editorkit)
     implementation(libs.flexbox)
 
-    // Data and Storage Libraries
+    // Storage & Data
     implementation(libs.mmkv.static)
-    implementation(libs.gson)
+    implementation("com.google.code.gson:gson:2.9.0")
 
-    // Reactive and Utility Libraries
-    implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.kotlinx.coroutines.core)
+    // Kotlin Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
-    // Language and Processing Libraries
+    // Language tools
     implementation(libs.language.base)
     implementation(libs.language.json)
 
-    // Intent and Utility Libraries
+    // Utility
     implementation(libs.quickie.foss)
     implementation(libs.core)
 
-    // AndroidX Lifecycle and Architecture Components
+    // Lifecycle
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.lifecycle.livedata.ktx)
     implementation(libs.lifecycle.runtime.ktx)
 
-    // Background Task Libraries
+    // WorkManager
     implementation(libs.work.runtime.ktx)
     implementation(libs.work.multiprocess)
 
-    // Multidex Support
+    // Multidex
     implementation(libs.multidex)
 
-    // Testing Libraries
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     testImplementation(libs.org.mockito.mockito.inline)
     testImplementation(libs.mockito.kotlin)
+
+    // Java 8+ API support
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
