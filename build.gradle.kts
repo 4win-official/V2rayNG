@@ -7,8 +7,10 @@ plugins {
 
 buildscript {
     dependencies {
-        classpath(libs.gradle.license.plugin)
-implementation 'com.google.code.gson:gson:2.9.0'
-    }
+    // سایر dependencies
+
+    // اضافه کردن Gson و Kotlin Coroutines
+    implementation("com.google.code.gson:gson:2.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }
 
