@@ -1,16 +1,27 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.android.library) apply false
-    alias(libs.plugins.kotlin.android) apply false
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
-// توجه: مخازن نباید اینجا تعریف بشن چون settings.gradle.kts مسئول اونهاست
-
-buildscript {
-    dependencies {
-        // افزودن Gson و Coroutines به صورت dependency مشترک
-        // توجه: معمولاً اینها باید داخل build.gradle.kts مربوط به ماژول app تعریف بشن، نه اینجا
+android {
+    compileSdk = 34
+    defaultConfig {
+        applicationId = "your.app.id"
+        minSdk = 21
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0"
     }
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+    }
+}
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.11.0")
 }
