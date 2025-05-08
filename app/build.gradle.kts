@@ -1,16 +1,14 @@
-// v2rayng/app/build.gradle.kts
-
 plugins {
     id("com.android.application")
     kotlin("android")
 }
 
 android {
-    namespace = "com.fourwin.vpn"       // جایگزین دلخواه شما
+    namespace = "com.fourwin.vpn"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.fourwin.vpn"  // همان مقدار namespace
+        applicationId = "com.fourwin.vpn"
         minSdk = 21
         targetSdk = 34
         versionCode = 1
