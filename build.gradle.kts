@@ -1,4 +1,4 @@
-// build.gradle.kts (project-level)
+// v2rayng/build.gradle.kts
 
 pluginManagement {
     repositories {
@@ -7,6 +7,7 @@ pluginManagement {
         mavenCentral()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
