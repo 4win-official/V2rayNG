@@ -1,3 +1,5 @@
+// v2rayng/settings.gradle.kts
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
