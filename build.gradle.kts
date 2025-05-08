@@ -6,6 +6,11 @@ plugins {
 }
 
 buildscript {
+    repositories {
+        google()  // مخزن گوگل
+        mavenCentral()  // مخزن Maven
+    }
+
     dependencies {
         // سایر dependencies
         classpath("com.google.code.gson:gson:2.9.0")
@@ -15,7 +20,7 @@ buildscript {
 
 allprojects {
     repositories {
-        google()
-        mavenCentral()
+        google()  // مخزن گوگل
+        mavenCentral()  // مخزن Maven
     }
 }
