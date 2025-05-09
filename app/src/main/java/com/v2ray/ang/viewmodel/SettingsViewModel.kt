@@ -74,18 +74,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 MmkvManager.encodeSettingsBool(key, v)
             }
 
-            // عدد صحیح (مثلاً MUX_CONCURRENCY و MUX_XUDP_CONCURRENCY)
+            // عدد صحیح
             MUX_CONCURRENCY,
             MUX_XUDP_CONCURRENCY -> {
                 val v = sp.getString(key, "8")?.toIntOrNull() ?: 8
                 MmkvManager.encodeSettingsInt(key, v)
             }
-        }
-
-        // حالت شب
-        if (key == UI_MODE_NIGHT) {
-            MmkvManager.encodeSettingsBool(UI_MODE_NIGHT, sp.getBoolean(UI_MODE_NIGHT, false))
-            SettingsManager.setNightMode()
         }
     }
 }
