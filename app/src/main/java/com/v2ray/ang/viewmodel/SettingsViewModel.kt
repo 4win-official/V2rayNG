@@ -68,9 +68,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             DOUBLE_COLUMN_DISPLAY,
             AUTO_UPDATE_SUBSCRIPTION,
             FRAGMENT_ENABLED,
-            MUX_ENABLED,
-            SNIFFING_ENABLED -> {
-                val v = sp.getBoolean(key, if (key == SNIFFING_ENABLED) true else false)
+            MUX_ENABLED -> {
+                val v = sp.getBoolean(key, false)
                 MmkvManager.encodeSettingsBool(key, v)
             }
         }
