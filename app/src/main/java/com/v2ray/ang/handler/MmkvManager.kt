@@ -1,49 +1,165 @@
 package com.v2ray.ang.handler
 
-import com.tencent.mmkv.MMKV import com.v2ray.ang.AppConfig.Pref.IS_BOOTED import com.v2ray.ang.AppConfig.Pref.ROUTING_RULESET import com.v2ray.ang.AppConfig.Pref.UI_MODE_NIGHT import com.v2ray.ang.dto.ProfileItem import com.v2ray.ang.dto.RulesetItem import com.v2ray.ang.dto.ServerAffiliationInfo import com.v2ray.ang.util.JsonUtil import com.v2ray.ang.util.Utils
+import com.tencent.mmkv.MMKV
+import com.v2ray.ang.AppConfig
+import com.v2ray.ang.dto.AssetUrlItem
+import com.v2ray.ang.dto.ProfileItem
+import com.v2ray.ang.dto.RulesetItem
+import com.v2ray.ang.dto.ServerAffiliationInfo
+import com.v2ray.ang.dto.SubscriptionItem
+import com.v2ray.ang.util.JsonUtil
+import com.v2ray.ang.util.Utils
 
-/**
+object MmkvManager {
 
-A minimal MMKV-backed settings manager for server configs and app preferences. */ object MmkvManager { private const val ID_MAIN = "MAIN" private const val ID_PROFILE = "PROFILE_FULL_CONFIG" private const val ID_AFF = "SERVER_AFF"
+    // شناسه‌ی جعبه‌های MMKV
+    private const val ID_MAIN = "MAIN"
+    private const val ID_PROFILE_FULL_CONFIG = "PROFILE_FULL_CONFIG"
+    private const val ID_SERVER_AFF = "SERVER_AFF"
 
-private const val KEY_SELECTED = "SELECTED_SERVER" private const val KEY_LIST = "ANG_CONFIGS"
+    // کلیدهای اصلی
+    private const val KEY_SELECTED_SERVER = "SELECTED_SERVER"
+    private const val KEY_ANG_CONFIGS = "ANG_CONFIGS"
 
-private val mainStorage by lazy { MMKV.mmkvWithID(ID_MAIN, MMKV.MULTI_PROCESS_MODE) } private val profileStorage by lazy { MMKV.mmkvWithID(ID_PROFILE, MMKV.MULTI_PROCESS_MODE) } private val affStorage by lazy { MMKV.mmkvWithID(ID_AFF, MMKV.MULTI_PROCESS_MODE) }
+    // دسترسی به جعبه‌ها
+    private val mainStorage by lazy { MMKV.mmkvWithID(ID_MAIN, MMKV.MULTI_PROCESS_MODE) }
+    private val profileFullStorage by lazy { MMKV.mmkvWithID(ID_PROFILE_FULL_CONFIG, MMKV.MULTI_PROCESS_MODE) }
+    private val serverAffStorage by lazy { MMKV.mmkvWithID(ID_SERVER_AFF, MMKV.MULTI_PROCESS_MODE) }
 
-// region Server List & Selection fun getSelectedServer(): String? = mainStorage.decodeString(KEY_SELECTED) fun setSelectedServer(guid: String) = mainStorage.encode(KEY_SELECTED, guid)
+    /** دریافت سرور انتخاب‌شده */
+    fun getSelectServer(): String? = mainStorage.decodeString(KEY_SELECTED_SERVER)
 
-fun encodeServerList(list: List<String>) = mainStorage.encode(KEY_LIST, JsonUtil.toJson(list))
+    /** تنظیم سرور انتخاب‌شده */
+    fun setSelectServer(guid: String) {
+        mainStorage.encode(KEY_SELECTED_SERVER, guid)
+    }
 
-fun decodeServerList(): MutableList<String> { val json = mainStorage.decodeString(KEY_LIST) return if (json.isNullOrBlank()) mutableListOf() else JsonUtil.fromJson(json, Array<String>::class.java).toMutableList() } // endregion
+    /** ذخیرهٔ لیست GUID سرورها */
+    fun encodeServerList(serverList: MutableList<String>) {
+        mainStorage.encode(KEY_ANG_CONFIGS, JsonUtil.toJson(serverList))
+    }
 
-// region Server Configs fun decodeServerConfig(guid: String): ProfileItem? { val json = profileStorage.decodeString(guid) return json?.takeIf { it.isNotBlank() }?.let { JsonUtil.fromJson(it, ProfileItem::class.java) } }
+    /** بازیابی لیست GUID سرورها */
+    fun decodeServerList(): MutableList<String> {
+        val json = mainStorage.decodeString(KEY_ANG_CONFIGS)
+        return if (json.isNullOrBlank()) mutableListOf()
+        else JsonUtil.fromJson(json, Array<String>::class.java).toMutableList()
+    }
 
-fun encodeServerConfig(guid: String, config: ProfileItem): String { val key = guid.ifBlank { Utils.getUuid() } profileStorage.encode(key, JsonUtil.toJson(config)) val list = decodeServerList() if (!list.contains(key)) { list.add(0, key) encodeServerList(list) if (getSelectedServer().isNullOrBlank()) setSelectedServer(key) } return key }
+    /** بازیابی تنظیمات کامل یک سرور */
+    fun decodeServerConfig(guid: String): ProfileItem? {
+        val json = profileFullStorage.decodeString(guid)
+        return if (json.isNullOrBlank()) null else JsonUtil.fromJson(json, ProfileItem::class.java)
+    }
 
-fun removeServer(guid: String) { if (getSelectedServer() == guid) mainStorage.remove(KEY_SELECTED) val list = decodeServerList().apply { remove(guid) } encodeServerList(list) profileStorage.remove(guid) affStorage.remove(guid) } // endregion
+    /** ذخیرهٔ تنظیمات کامل یک سرور */
+    fun encodeServerConfig(guid: String, config: ProfileItem): String {
+        val key = guid.ifBlank { Utils.getUuid() }
+        profileFullStorage.encode(key, JsonUtil.toJson(config))
+        val serverList = decodeServerList()
+        if (!serverList.contains(key)) {
+            serverList.add(0, key)
+            encodeServerList(serverList)
+            if (getSelectServer().isNullOrBlank()) {
+                setSelectServer(key)
+            }
+        }
+        return key
+    }
 
-// region Affiliation / Delay fun decodeAffiliation(guid: String): ServerAffiliationInfo? { val json = affStorage.decodeString(guid) return json?.takeIf { it.isNotBlank() }?.let { JsonUtil.fromJson(it, ServerAffiliationInfo::class.java) } }
+    /** حذف یک سرور */
+    fun removeServer(guid: String) {
+        if (getSelectServer() == guid) {
+            mainStorage.remove(KEY_SELECTED_SERVER)
+        }
+        val serverList = decodeServerList().apply { remove(guid) }
+        encodeServerList(serverList)
+        profileFullStorage.remove(guid)
+        serverAffStorage.remove(guid)
+    }
 
-fun encodeDelay(guid: String, delay: Long) { val info = decodeAffiliation(guid) ?: ServerAffiliationInfo() info.testDelayMillis = delay affStorage.encode(guid, JsonUtil.toJson(info)) }
+    /** اطلاعات تأخیر تست TCP */
+    fun decodeServerAffiliationInfo(guid: String): ServerAffiliationInfo? {
+        val json = serverAffStorage.decodeString(guid)
+        return if (json.isNullOrBlank()) null else JsonUtil.fromJson(json, ServerAffiliationInfo::class.java)
+    }
 
-fun clearDelays(keys: List<String>?) = keys?.forEach { decodeAffiliation(it)?.apply { testDelayMillis = 0 } ?.let { affStorage.encode(it.guid, JsonUtil.toJson(it)) } } // endregion
+    /** ثبت نتیجهٔ تست TCP ping */
+    fun encodeServerTestDelayMillis(guid: String, testResult: Long) {
+        val aff = decodeServerAffiliationInfo(guid) ?: ServerAffiliationInfo()
+        aff.testDelayMillis = testResult
+        serverAffStorage.encode(guid, JsonUtil.toJson(aff))
+    }
 
-// region Cleanup fun removeAllServers(): Int { val count = profileStorage.allKeys()?.size ?: 0 mainStorage.clearAll() profileStorage.clearAll() affStorage.clearAll() return count }
+    /** پاک‌کردن همهٔ نتایج تست */
+    fun clearAllTestDelayResults(keys: List<String>?) {
+        keys?.forEach { key ->
+            decodeServerAffiliationInfo(key)?.let {
+                it.testDelayMillis = 0
+                serverAffStorage.encode(key, JsonUtil.toJson(it))
+            }
+        }
+    }
 
-fun removeInvalid(guid: String = ""): Int { val keys = if (guid.isNotEmpty()) listOf(guid) else affStorage.allKeys()?.toList() ?: emptyList() var removed = 0 keys.forEach { decodeAffiliation(it)?.takeIf { info -> info.testDelayMillis < 0 }?.also { removeServer(it.guid) removed++ } } return removed } // endregion
+    /** حذف همهٔ سرورها */
+    fun removeAllServer(): Int {
+        val count = profileFullStorage.allKeys()?.size ?: 0
+        mainStorage.clearAll()
+        profileFullStorage.clearAll()
+        serverAffStorage.clearAll()
+        return count
+    }
 
-// region Preferences fun encodeSettings(key: String, value: String?) = mainStorage.encode(key, value) fun encodeSettings(key: String, value: Boolean) = mainStorage.encode(key, value)
+    /** حذف سرورهای نامعتبر */
+    fun removeInvalidServer(guid: String): Int {
+        var count = 0
+        val keys = if (guid.isNotEmpty()) listOf(guid) else serverAffStorage.allKeys()?.toList() ?: emptyList()
+        keys.forEach { key ->
+            decodeServerAffiliationInfo(key)?.let {
+                if (it.testDelayMillis < 0L) {
+                    removeServer(key)
+                    count++
+                }
+            }
+        }
+        return count
+    }
 
-fun decodeStartOnBoot(): Boolean = mainStorage.decodeBool(IS_BOOTED, false)
+    //––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
-fun encodeStartOnBoot(onBoot: Boolean) = mainStorage.encode(IS_BOOTED, onBoot)
+    /** متدهای جدید برای ذخیره‌سازی تنظیمات از SettingsViewModel */
 
-fun decodeUiModeNight(): Boolean = mainStorage.decodeBool(UI_MODE_NIGHT, false)
+    /** ذخیرهٔ مقدار رشته‌ای */
+    fun encodeSettingsString(key: String, value: String) {
+        mainStorage.encode(key, value)
+    }
 
-fun encodeUiModeNight(night: Boolean) = mainStorage.encode(UI_MODE_NIGHT, night)
+    /** ذخیرهٔ مقدار بولین */
+    fun encodeSettingsBool(key: String, value: Boolean) {
+        mainStorage.encode(key, value)
+    }
 
-fun decodeRoutingRulesets(): MutableList<RulesetItem>? { val json = mainStorage.decodeString(ROUTING_RULESET) return json?.takeIf { it.isNotBlank() } ?.let { JsonUtil.fromJson(it, Array<RulesetItem>::class.java).toMutableList() } }
+    /** ذخیرهٔ مقدار عدد صحیح */
+    fun encodeSettingsInt(key: String, value: Int) {
+        mainStorage.encode(key, value)
+    }
 
-fun encodeRoutingRulesets(list: MutableList<RulesetItem>?) = mainStorage.encode(ROUTING_RULESET, list?.let(JsonUtil::toJson) ?: "") // endregion }
+    //––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
+    /** استارت روی بوت */
+    fun encodeStartOnBoot(startOnBoot: Boolean) {
+        encodeSettingsBool(AppConfig.Pref.IS_BOOTED, startOnBoot)
+    }
+    fun decodeStartOnBoot(): Boolean = mainStorage.decodeBool(AppConfig.Pref.IS_BOOTED, false)
 
+    /** قوانین مسیریابی */
+    fun decodeRoutingRulesets(): MutableList<RulesetItem>? {
+        val json = mainStorage.decodeString(AppConfig.Pref.ROUTING_RULESET)
+        return if (json.isNullOrEmpty()) null else JsonUtil.fromJson(json, Array<RulesetItem>::class.java).toMutableList()
+    }
+    fun encodeRoutingRulesets(list: MutableList<RulesetItem>?) {
+        if (list.isNullOrEmpty()) encodeSettingsString(AppConfig.Pref.ROUTING_RULESET, "")
+        else encodeSettingsString(AppConfig.Pref.ROUTING_RULESET, JsonUtil.toJson(list))
+    }
+
+}
