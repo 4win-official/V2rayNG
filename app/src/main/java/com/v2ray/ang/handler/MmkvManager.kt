@@ -1,9 +1,9 @@
 package com.v2ray.ang.handler
 
 import com.tencent.mmkv.MMKV
+import com.v2ray.ang.AppConfig.Pref.UI_MODE_NIGHT as PREF_UI_MODE_NIGHT // اصلاح شد
 import com.v2ray.ang.AppConfig.PREF_IS_BOOTED
 import com.v2ray.ang.AppConfig.PREF_ROUTING_RULESET
-import com.v2ray.ang.AppConfig.PREF_UI_MODE_NIGHT // این خط مهمه
 import com.v2ray.ang.dto.AssetUrlItem
 import com.v2ray.ang.dto.ProfileItem
 import com.v2ray.ang.dto.RulesetItem
@@ -87,54 +87,3 @@ object MmkvManager {
                 it.testDelayMillis = 0
                 serverAffStorage.encode(key, JsonUtil.toJson(it))
             }
-        }
-    }
-
-    fun removeAllServer(): Int {
-        val count = profileFullStorage.allKeys()?.count() ?: 0
-        mainStorage.clearAll()
-        profileFullStorage.clearAll()
-        serverAffStorage.clearAll()
-        return count
-    }
-
-    fun removeInvalidServer(guid: String): Int {
-        var count = 0
-        val keys = if (guid.isNotEmpty()) listOf(guid) else serverAffStorage.allKeys()?.toList() ?: emptyList()
-        keys.forEach { key ->
-            decodeServerAffiliationInfo(key)?.let {
-                if (it.testDelayMillis < 0L) {
-                    removeServer(key)
-                    count++
-                }
-            }
-        }
-        return count
-    }
-
-    fun encodeStartOnBoot(startOnBoot: Boolean) {
-        mainStorage.encode(PREF_IS_BOOTED, startOnBoot)
-    }
-
-    fun decodeStartOnBoot(): Boolean = mainStorage.decodeBool(PREF_IS_BOOTED, false)
-
-    fun decodeRoutingRulesets(): MutableList<RulesetItem>? {
-        val ruleset = mainStorage.decodeString(PREF_ROUTING_RULESET)
-        return if (ruleset.isNullOrEmpty()) null else JsonUtil.fromJson(ruleset, Array<RulesetItem>::class.java).toMutableList()
-    }
-
-    fun encodeRoutingRulesets(rulesetList: MutableList<RulesetItem>?) {
-        if (rulesetList.isNullOrEmpty())
-            mainStorage.encode(PREF_ROUTING_RULESET, "")
-        else
-            mainStorage.encode(PREF_ROUTING_RULESET, JsonUtil.toJson(rulesetList))
-    }
-
-    fun encodeUiModeNight(isNight: Boolean) {
-        mainStorage.encode(PREF_UI_MODE_NIGHT, isNight)
-    }
-
-    fun decodeUiModeNight(): Boolean {
-        return mainStorage.decodeBool(PREF_UI_MODE_NIGHT, false)
-    }
-}
