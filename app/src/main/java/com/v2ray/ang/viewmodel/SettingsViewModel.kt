@@ -5,8 +5,9 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.preference.PreferenceManager
-import com.v2ray.ang.AppConfig
-import com.v2ray.ang.handler.MmkvManager
+import com.v2ray.ang.AppConfig.Pref.*           // import همه کلیدهای Pref
+import com.v2ray.ang.AppConfig              // برای TAG
+import com.v2ray.ang.handler.MmkvManager    // برای encodeSettings
 import com.v2ray.ang.handler.SettingsManager
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application),
@@ -38,59 +39,59 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         Log.i(AppConfig.TAG, "Observe settings changed: $key")
         when (key) {
-            AppConfig.PREF_MODE,
-            AppConfig.PREF_VPN_DNS,
-            AppConfig.PREF_VPN_BYPASS_LAN,
-            AppConfig.PREF_REMOTE_DNS,
-            AppConfig.PREF_DOMESTIC_DNS,
-            AppConfig.PREF_DNS_HOSTS,
-            AppConfig.PREF_DELAY_TEST_URL,
-            AppConfig.PREF_LOCAL_DNS_PORT,
-            AppConfig.PREF_SOCKS_PORT,
-            AppConfig.PREF_LOGLEVEL,
-            AppConfig.PREF_LANGUAGE,
-            AppConfig.PREF_UI_MODE_NIGHT,
-            AppConfig.PREF_ROUTING_DOMAIN_STRATEGY,
-            AppConfig.SUBSCRIPTION_AUTO_UPDATE_INTERVAL,
-            AppConfig.PREF_FRAGMENT_PACKETS,
-            AppConfig.PREF_FRAGMENT_LENGTH,
-            AppConfig.PREF_FRAGMENT_INTERVAL,
-            AppConfig.PREF_MUX_XUDP_QUIC,
+            MODE,
+            VPN_DNS,
+            VPN_BYPASS_LAN,
+            REMOTE_DNS,
+            DOMESTIC_DNS,
+            DNS_HOSTS,
+            DELAY_TEST_URL,
+            LOCAL_DNS_PORT,
+            SOCKS_PORT,
+            LOG_LEVEL,
+            LANGUAGE,
+            UI_MODE_NIGHT,
+            ROUTING_DOMAIN_STRATEGY,
+            UPDATE_INTERVAL,
+            FRAGMENT_PACKETS,
+            FRAGMENT_LENGTH,
+            FRAGMENT_INTERVAL,
+            MUX_XUDP_QUIC,
                 -> {
-                MmkvManager.encodeSettings(key, sharedPreferences.getString(key, ""))
+                MmkvManager.encodeSettings(key!!, sharedPreferences.getString(key, "")!!)
             }
 
-            AppConfig.PREF_ROUTE_ONLY_ENABLED,
-            AppConfig.PREF_IS_BOOTED,
-            AppConfig.PREF_SPEED_ENABLED,
-            AppConfig.PREF_PROXY_SHARING,
-            AppConfig.PREF_LOCAL_DNS_ENABLED,
-            AppConfig.PREF_FAKE_DNS_ENABLED,
-            AppConfig.PREF_APPEND_HTTP_PROXY,
-            AppConfig.PREF_ALLOW_INSECURE,
-            AppConfig.PREF_PREFER_IPV6,
-            AppConfig.PREF_PER_APP_PROXY,
-            AppConfig.PREF_BYPASS_APPS,
-            AppConfig.PREF_CONFIRM_REMOVE,
-            AppConfig.PREF_START_SCAN_IMMEDIATE,
-            AppConfig.PREF_DOUBLE_COLUMN_DISPLAY,
-            AppConfig.SUBSCRIPTION_AUTO_UPDATE,
-            AppConfig.PREF_FRAGMENT_ENABLED,
-            AppConfig.PREF_MUX_ENABLED,
+            ROUTE_ONLY_ENABLED,
+            IS_BOOTED,
+            SPEED_ENABLED,
+            PROXY_SHARING,
+            LOCAL_DNS_ENABLED,
+            FAKE_DNS_ENABLED,
+            APPEND_HTTP_PROXY,
+            ALLOW_INSECURE,
+            PREFER_IPV6,
+            PER_APP_PROXY,
+            BYPASS_APPS,
+            CONFIRM_REMOVE,
+            START_SCAN_IMMEDIATE,
+            DOUBLE_COLUMN_DISPLAY,
+            AUTO_UPDATE_SUBSCRIPTION,
+            FRAGMENT_ENABLED,
+            MUX_ENABLED,
                 -> {
-                MmkvManager.encodeSettings(key, sharedPreferences.getBoolean(key, false))
+                MmkvManager.encodeSettings(key!!, sharedPreferences.getBoolean(key, false))
             }
 
-            AppConfig.PREF_SNIFFING_ENABLED -> {
+            SNIFFING_ENABLED -> {
                 MmkvManager.encodeSettings(key, sharedPreferences.getBoolean(key, true))
             }
 
-            AppConfig.PREF_MUX_CONCURRENCY,
-            AppConfig.PREF_MUX_XUDP_CONCURRENCY -> {
-                MmkvManager.encodeSettings(key, sharedPreferences.getString(key, "8"))
+            MUX_CONCURRENCY,
+            MUX_XUDP_CONCURRENCY -> {
+                MmkvManager.encodeSettings(key!!, sharedPreferences.getString(key, "")!!)
             }
         }
-        if (key == AppConfig.PREF_UI_MODE_NIGHT) {
+        if (key == UI_MODE_NIGHT) {
             SettingsManager.setNightMode()
         }
     }
