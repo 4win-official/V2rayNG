@@ -6,7 +6,7 @@ import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.preference.PreferenceManager
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.AppConfig.Pref.*              // import همه‌ی Pref.*
+import com.v2ray.ang.AppConfig.Pref.*            // import همه‌ی Pref.*
 import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsManager
 
@@ -30,7 +30,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         Log.i(AppConfig.TAG, "Observe settings changed: $key")
 
         when (key) {
-            // رشته‌ای
+            // تنظیمات رشته‌ای
             MODE,
             VPN_DNS,
             VPN_BYPASS_LAN,
@@ -52,7 +52,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 MmkvManager.encodeSettings(key, sharedPreferences.getString(key, "")!!)
             }
 
-            // بولی
+            // تنظیمات بولی
             ROUTE_ONLY_ENABLED,
             IS_BOOTED,
             SPEED_ENABLED,
@@ -73,6 +73,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 MmkvManager.encodeSettings(key, sharedPreferences.getBoolean(key, false))
             }
 
+            // استثنای SNIFFING_ENABLED: پیش‌فرض true
             SNIFFING_ENABLED -> {
                 MmkvManager.encodeSettings(key, sharedPreferences.getBoolean(key, true))
             }
