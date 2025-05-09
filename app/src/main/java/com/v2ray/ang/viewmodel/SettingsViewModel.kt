@@ -66,9 +66,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             CONFIRM_REMOVE,
             START_SCAN_IMMEDIATE,
             DOUBLE_COLUMN_DISPLAY,
-            AUTO_UPDATE_SUBSCRIPTION,
-            FRAGMENT_ENABLED,
-            MUX_ENABLED -> {
+            AUTO_UPDATE_SUBSCRIPTION -> {
                 val v = sp.getBoolean(key, false)
                 MmkvManager.encodeSettingsBool(key, v)
             }
