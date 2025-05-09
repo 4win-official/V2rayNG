@@ -91,4 +91,13 @@ object MmkvManager {
         if (json.isEmpty()) return null
         return JsonUtil.fromJson(json, Array<RulesetItem>::class.java).toMutableList()
     }
+
+    //—— متدهای مورد نیاز SettingsViewModel ——————————————————
+    fun encodeSettingsString(key: String, value: String) {
+        encodeString(key, value)
+    }
+
+    fun encodeSettingsBool(key: String, value: Boolean) {
+        encodeBoolean(key, value)
+    }
 }
