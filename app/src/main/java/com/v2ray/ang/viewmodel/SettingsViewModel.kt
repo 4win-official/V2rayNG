@@ -73,13 +73,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 val v = sp.getBoolean(key, if (key == SNIFFING_ENABLED) true else false)
                 MmkvManager.encodeSettingsBool(key, v)
             }
-
-            // عدد صحیح
-            MUX_CONCURRENCY,
-            MUX_XUDP_CONCURRENCY -> {
-                val v = sp.getString(key, "8")?.toIntOrNull() ?: 8
-                MmkvManager.encodeSettingsInt(key, v)
-            }
         }
     }
 }
