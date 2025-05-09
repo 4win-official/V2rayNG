@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -11,202 +12,154 @@ import com.v2ray.ang.AngApplication
 import es.dmoral.toasty.Toasty
 import org.json.JSONObject
 import java.io.Serializable
-import java.net.URI
 import java.net.URLConnection
 
-val Context.v2RayApplication: AngApplication?
+//==============================================================================//
+// Context Extensions
+//==============================================================================//
+
+/** Casts applicationContext to our custom AngApplication, or null if mismatch */
+val Context.v2RayApp: AngApplication?
     get() = applicationContext as? AngApplication
 
-/**
- * Shows a toast message with the given resource ID.
- *
- * @param message The resource ID of the message to show.
- */
-fun Context.toast(message: Int) {
-    Toasty.normal(this, message).show()
+/** Generic toast by resource ID */
+fun Context.toast(@androidx.annotation.StringRes msgRes: Int) {
+    Toasty.normal(this, msgRes).show()
 }
 
-/**
- * Shows a toast message with the given text.
- *
- * @param message The text of the message to show.
- */
-fun Context.toast(message: CharSequence) {
-    Toasty.normal(this, message).show()
+/** Generic toast by text */
+fun Context.toast(msg: CharSequence) {
+    Toasty.normal(this, msg).show()
 }
 
-/**
- * Shows a toast message with the given resource ID.
- *
- * @param message The resource ID of the message to show.
- */
-fun Context.toastSuccess(message: Int) {
-    Toasty.success(this, message, Toast.LENGTH_SHORT, true).show()
+/** Success-style toast */
+fun Context.toastSuccess(msg: CharSequence) {
+    Toasty.success(this, msg, Toast.LENGTH_SHORT, true).show()
+}
+fun Context.toastSuccess(@androidx.annotation.StringRes msgRes: Int) {
+    Toasty.success(this, msgRes, Toast.LENGTH_SHORT, true).show()
 }
 
-/**
- * Shows a toast message with the given text.
- *
- * @param message The text of the message to show.
- */
-fun Context.toastSuccess(message: CharSequence) {
-    Toasty.success(this, message, Toast.LENGTH_SHORT, true).show()
+/** Error-style toast */
+fun Context.toastError(msg: CharSequence) {
+    Toasty.error(this, msg, Toast.LENGTH_SHORT, true).show()
+}
+fun Context.toastError(@androidx.annotation.StringRes msgRes: Int) {
+    Toasty.error(this, msgRes, Toast.LENGTH_SHORT, true).show()
 }
 
-/**
- * Shows a toast message with the given resource ID.
- *
- * @param message The resource ID of the message to show.
- */
-fun Context.toastError(message: Int) {
-    Toasty.error(this, message, Toast.LENGTH_SHORT, true).show()
-}
+//==============================================================================//
+// JSON Extensions
+//==============================================================================//
 
-/**
- * Shows a toast message with the given text.
- *
- * @param message The text of the message to show.
- */
-fun Context.toastError(message: CharSequence) {
-    Toasty.error(this, message, Toast.LENGTH_SHORT, true).show()
-}
-
-
-/**
- * Puts a key-value pair into the JSONObject.
- *
- * @param pair The key-value pair to put.
- */
+/** Puts a single key–value pair into a JSONObject */
 fun JSONObject.putOpt(pair: Pair<String, Any?>) {
     put(pair.first, pair.second)
 }
 
-/**
- * Puts multiple key-value pairs into the JSONObject.
- *
- * @param pairs The map of key-value pairs to put.
- */
-fun JSONObject.putOpt(pairs: Map<String, Any?>) {
-    pairs.forEach { put(it.key, it.value) }
+/** Puts multiple key–value pairs into a JSONObject */
+fun JSONObject.putOpt(map: Map<String, Any?>) {
+    map.forEach { (k, v) -> put(k, v) }
 }
 
-const val THRESHOLD = 1000L
-const val DIVISOR = 1024.0
+//==============================================================================//
+// URI & URLConnection Extensions
+//==============================================================================//
 
-/**
- * Converts a Long value to a speed string.
- *
- * @return The speed string.
- */
-fun Long.toSpeedString(): String = this.toTrafficString() + "/s"
+/** Returns content length in a backward-compatible way */
+val URLConnection.contentLengthCompat: Long
+    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) contentLengthLong
+            else contentLength.toLong()
 
-/**
- * Converts a Long value to a traffic string.
- *
- * @return The traffic string.
- */
+/** Returns host without surrounding brackets (for IPv6 URIs) */
+val Uri.idnHost: String
+    get() = host?.removePrefix("[").removeSuffix("]") ?: ""
+
+//==============================================================================//
+// Numeric Formatting
+//==============================================================================//
+
+private const val THRESHOLD = 1000L
+private const val DIVISOR = 1024.0
+
+/** Formats bytes/sec */
+fun Long.toSpeedString(): String = "${toTrafficString()}/s"
+
+/** Formats bytes */
 fun Long.toTrafficString(): String {
     val units = arrayOf("B", "KB", "MB", "GB", "TB", "PB")
-    var size = this.toDouble()
-    var unitIndex = 0
-    while (size >= THRESHOLD && unitIndex < units.size - 1) {
+    var size = toDouble()
+    var idx = 0
+    while (size >= THRESHOLD && idx < units.lastIndex) {
         size /= DIVISOR
-        unitIndex++
+        idx++
     }
-    return String.format("%.1f %s", size, units[unitIndex])
+    return String.format("%.1f %s", size, units[idx])
 }
 
-val URLConnection.responseLength: Long
-    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        contentLengthLong
-    } else {
-        contentLength.toLong()
-    }
+//==============================================================================//
+// String & Bundle/Intent Serialization
+//==============================================================================//
 
-val URI.idnHost: String
-    get() = host?.replace("[", "")?.replace("]", "").orEmpty()
+/** Safely removes all spaces */
+fun String?.removeWhitespace(): String? = this?.replace("\\s+".toRegex(), "")
 
-/**
- * Removes all whitespace from the string.
- *
- * @return The string without whitespace.
- */
-fun String?.removeWhiteSpace(): String? = this?.replace(" ", "")
+/** Parses long or returns 0 if invalid */
+fun String.toLongSafe(): Long = toLongOrNull() ?: 0L
 
-/**
- * Converts the string to a Long value, or returns 0 if the conversion fails.
- *
- * @return The Long value.
- */
-fun String.toLongEx(): Long = toLongOrNull() ?: 0
-
-/**
- * Listens for package changes and executes a callback when a change occurs.
- *
- * @param onetime Whether to unregister the receiver after the first callback.
- * @param callback The callback to execute when a package change occurs.
- * @return The BroadcastReceiver that was registered.
- */
-fun Context.listenForPackageChanges(onetime: Boolean = true, callback: () -> Unit) =
-    object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            callback()
-            if (onetime) context.unregisterReceiver(this)
-        }
-    }.apply {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(this, IntentFilter().apply {
-                addAction(Intent.ACTION_PACKAGE_ADDED)
-                addAction(Intent.ACTION_PACKAGE_REMOVED)
-                addDataScheme("package")
-            }, Context.RECEIVER_EXPORTED)
-        } else {
-            registerReceiver(this, IntentFilter().apply {
-                addAction(Intent.ACTION_PACKAGE_ADDED)
-                addAction(Intent.ACTION_PACKAGE_REMOVED)
-                addDataScheme("package")
-            })
-        }
-    }
-
-/**
- * Retrieves a serializable object from the Bundle.
- *
- * @param key The key of the serializable object.
- * @return The serializable object, or null if not found.
- */
-inline fun <reified T : Serializable> Bundle.serializable(key: String): T? = when {
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> getSerializable(key, T::class.java)
-    else -> @Suppress("DEPRECATION") getSerializable(key) as? T
-}
-
-/**
- * Retrieves a serializable object from the Intent.
- *
- * @param key The key of the serializable object.
- * @return The serializable object, or null if not found.
- */
-inline fun <reified T : Serializable> Intent.serializable(key: String): T? = when {
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> getSerializableExtra(key, T::class.java)
-    else -> @Suppress("DEPRECATION") getSerializableExtra(key) as? T
-}
-
-/**
- * Checks if the CharSequence is not null and not empty.
- *
- * @return True if the CharSequence is not null and not empty, false otherwise.
- */
-fun CharSequence?.isNotNullEmpty(): Boolean = this != null && this.isNotEmpty()
-
+/** Concatenates URL segments ensuring single slashes */
 fun String.concatUrl(vararg paths: String): String {
-    val builder = StringBuilder(this.trimEnd('/'))
+    val base = this.trimEnd('/')
+    return paths.fold(base) { acc, p ->
+        acc + "/" + p.trim('/')
+    }
+}
 
-    paths.forEach { path ->
-        val trimmedPath = path.trim('/')
-        if (trimmedPath.isNotEmpty()) {
-            builder.append('/').append(trimmedPath)
-        }
+/** Extracts a Serializable extra in a type-safe way */
+inline fun <reified T : Serializable> Bundle.getSerializableCompat(key: String): T? =
+    when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+            getSerializable(key, T::class.java)
+        else ->
+            @Suppress("DEPRECATION") getSerializable(key) as? T
     }
 
-    return builder.toString()
+inline fun <reified T : Serializable> Intent.getSerializableCompat(key: String): T? =
+    when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU ->
+            getSerializableExtra(key, T::class.java)
+        else ->
+            @Suppress("DEPRECATION") getSerializableExtra(key) as? T
+    }
+
+//==============================================================================//
+// BroadcastReceiver Helpers
+//==============================================================================//
+
+/**
+ * Registers a one-shot or persistent receiver for package install/uninstall.
+ * @param oneShot if true, unregister after first event
+ * @param onChange callback when package changes
+ */
+fun Context.listenForPackageChanges(
+    oneShot: Boolean = true,
+    onChange: () -> Unit
+): BroadcastReceiver {
+    val filter = IntentFilter().apply {
+        addAction(Intent.ACTION_PACKAGE_ADDED)
+        addAction(Intent.ACTION_PACKAGE_REMOVED)
+        addDataScheme("package")
+    }
+    val receiver = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context, intent: Intent) {
+            onChange()
+            if (oneShot) unregisterReceiver(this)
+        }
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
+    } else {
+        registerReceiver(receiver, filter)
+    }
+    return receiver
 }
