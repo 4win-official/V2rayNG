@@ -5,25 +5,19 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.preference.PreferenceManager
-import com.v2ray.ang.AppConfig.Pref.*           // import همه کلیدهای Pref
-import com.v2ray.ang.AppConfig              // برای TAG
-import com.v2ray.ang.handler.MmkvManager    // برای encodeSettings
+import com.v2ray.ang.AppConfig
+import com.v2ray.ang.AppConfig.Pref.*              // import همه‌ی Pref.*
+import com.v2ray.ang.handler.MmkvManager
 import com.v2ray.ang.handler.SettingsManager
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application),
     SharedPreferences.OnSharedPreferenceChangeListener {
 
-    /**
-     * Starts listening for preference changes.
-     */
     fun startListenPreferenceChange() {
         PreferenceManager.getDefaultSharedPreferences(getApplication())
             .registerOnSharedPreferenceChangeListener(this)
     }
 
-    /**
-     * Called when the ViewModel is cleared.
-     */
     override fun onCleared() {
         PreferenceManager.getDefaultSharedPreferences(getApplication())
             .unregisterOnSharedPreferenceChangeListener(this)
@@ -31,14 +25,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         super.onCleared()
     }
 
-    /**
-     * Called when a shared preference is changed.
-     * @param sharedPreferences The shared preferences.
-     * @param key The key of the changed preference.
-     */
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
+        if (key == null) return
         Log.i(AppConfig.TAG, "Observe settings changed: $key")
+
         when (key) {
+            // رشته‌ای
             MODE,
             VPN_DNS,
             VPN_BYPASS_LAN,
@@ -56,11 +48,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             FRAGMENT_PACKETS,
             FRAGMENT_LENGTH,
             FRAGMENT_INTERVAL,
-            MUX_XUDP_QUIC,
-                -> {
-                MmkvManager.encodeSettings(key!!, sharedPreferences.getString(key, "")!!)
+            MUX_XUDP_QUIC -> {
+                MmkvManager.encodeSettings(key, sharedPreferences.getString(key, "")!!)
             }
 
+            // بولی
             ROUTE_ONLY_ENABLED,
             IS_BOOTED,
             SPEED_ENABLED,
@@ -77,20 +69,21 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             DOUBLE_COLUMN_DISPLAY,
             AUTO_UPDATE_SUBSCRIPTION,
             FRAGMENT_ENABLED,
-            MUX_ENABLED,
-                -> {
-                MmkvManager.encodeSettings(key!!, sharedPreferences.getBoolean(key, false))
+            MUX_ENABLED -> {
+                MmkvManager.encodeSettings(key, sharedPreferences.getBoolean(key, false))
             }
 
             SNIFFING_ENABLED -> {
                 MmkvManager.encodeSettings(key, sharedPreferences.getBoolean(key, true))
             }
 
+            // دوباره رشته‌ای برای این دو
             MUX_CONCURRENCY,
             MUX_XUDP_CONCURRENCY -> {
-                MmkvManager.encodeSettings(key!!, sharedPreferences.getString(key, "")!!)
+                MmkvManager.encodeSettings(key, sharedPreferences.getString(key, "")!!)
             }
         }
+
         if (key == UI_MODE_NIGHT) {
             SettingsManager.setNightMode()
         }
