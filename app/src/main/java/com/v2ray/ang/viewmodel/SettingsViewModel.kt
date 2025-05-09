@@ -62,9 +62,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             ALLOW_INSECURE,
             PREFER_IPV6,
             PER_APP_PROXY,
-            BYPASS_APPS,
-            CONFIRM_REMOVE,
-            START_SCAN_IMMEDIATE -> {
+            BYPASS_APPS -> {
                 val v = sp.getBoolean(key, false)
                 MmkvManager.encodeSettingsBool(key, v)
             }
