@@ -47,7 +47,7 @@ object AppConfig {
         const val START_SCAN_IMMEDIATE        = "pref_start_scan_immediate"
         const val DOUBLE_COLUMN_DISPLAY       = "pref_double_column_display"
         const val LANGUAGE                    = "pref_language"
-        const val UI_MODE_NIGHT               = "pref_ui_mode_night"
+        const val UI_MODE_NIGHT               = "pref_ui_mode_night" // این خط به درستی تعریف شده
         const val PREFER_IPV6                 = "pref_prefer_ipv6"
         const val PROXY_SHARING               = "pref_proxy_sharing_enabled"
         const val ALLOW_INSECURE              = "pref_allow_insecure"
