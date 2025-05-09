@@ -64,8 +64,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             PER_APP_PROXY,
             BYPASS_APPS,
             CONFIRM_REMOVE,
-            START_SCAN_IMMEDIATE,
-            DOUBLE_COLUMN_DISPLAY -> {
+            START_SCAN_IMMEDIATE -> {
                 val v = sp.getBoolean(key, false)
                 MmkvManager.encodeSettingsBool(key, v)
             }
