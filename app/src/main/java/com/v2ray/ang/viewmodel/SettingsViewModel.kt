@@ -1,68 +1,100 @@
 package com.v2ray.ang.viewmodel
 
-import android.app.Application
 import android.content.SharedPreferences
-import android.util.Log
-import androidx.lifecycle.AndroidViewModel
-import androidx.preference.PreferenceManager
+import androidx.lifecycle.ViewModel
 import com.v2ray.ang.AppConfig
-import com.v2ray.ang.AppConfig.Pref.*
-import com.v2ray.ang.handler.MmkvManager
-import com.v2ray.ang.handler.SettingsManager
+import com.v2ray.ang.util.MmkvManager
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application),
-    SharedPreferences.OnSharedPreferenceChangeListener {
+class SettingsViewModel : ViewModel() {
 
-    fun startListenPreferenceChange() {
-        PreferenceManager.getDefaultSharedPreferences(getApplication())
-            .registerOnSharedPreferenceChangeListener(this)
-    }
-
-    override fun onCleared() {
-        PreferenceManager.getDefaultSharedPreferences(getApplication())
-            .unregisterOnSharedPreferenceChangeListener(this)
-        Log.i(AppConfig.TAG, "Settings ViewModel is cleared")
-        super.onCleared()
-    }
-
-    override fun onSharedPreferenceChanged(sp: SharedPreferences, key: String?) {
-        if (key == null) return
-        Log.i(AppConfig.TAG, "Preference changed: $key")
+    fun onPreferenceChanged(sp: SharedPreferences, key: String) {
         when (key) {
-            // رشته‌ای
-            MODE,
-            VPN_DNS,
-            VPN_BYPASS_LAN,
-            REMOTE_DNS,
-            DOMESTIC_DNS,
-            DNS_HOSTS,
-            DELAY_TEST_URL,
-            LOCAL_DNS_PORT,
-            SOCKS_PORT,
-            LOG_LEVEL,
-            LANGUAGE,
-            ROUTING_DOMAIN_STRATEGY,
-            UPDATE_INTERVAL,
-            FRAGMENT_PACKETS,
-            FRAGMENT_LENGTH,
-            FRAGMENT_INTERVAL,
-            MUX_XUDP_QUIC -> {
-                val v = sp.getString(key, "") ?: ""
-                MmkvManager.encodeSettingsString(key, v)
+            AppConfig.Pref.ENABLE_PROXY -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
             }
 
-            // بولینی
-            ROUTE_ONLY_ENABLED,
-            IS_BOOTED,
-            SPEED_ENABLED,
-            PROXY_SHARING,
-            LOCAL_DNS_ENABLED,
-            FAKE_DNS_ENABLED,
-            APPEND_HTTP_PROXY,
-            ALLOW_INSECURE,
-            PREFER_IPV6,
-            PER_APP_PROXY,
-            BYPASS_APPS -> {
+            AppConfig.Pref.ALLOW_INSECURE -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.SOCKS_PORT -> {
+                val v = sp.getString(key, "10808")
+                MmkvManager.encodeSettingsStr(key, v)
+            }
+
+            AppConfig.Pref.HTTP_PORT -> {
+                val v = sp.getString(key, "10809")
+                MmkvManager.encodeSettingsStr(key, v)
+            }
+
+            AppConfig.Pref.ENABLE_NOTIFY -> {
+                val v = sp.getBoolean(key, true)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.SPEED_ENABLED -> {
+                val v = sp.getBoolean(key, true)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.TETHERING_SUPPORT -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.ENABLE_DIRECT_BOOT -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.UDP_FORWARDING -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.ALLOW_OTHER_APP -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.RESTORE_ON_BOOT -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.BOOT_DELAY -> {
+                val v = sp.getString(key, "0")
+                MmkvManager.encodeSettingsStr(key, v)
+            }
+
+            AppConfig.Pref.PER_APP_PROXY -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.REPLACE_START -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.TUN_MODE -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.DNS_FORWARD -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.REPLACE_SYSTEM_DNS -> {
+                val v = sp.getBoolean(key, false)
+                MmkvManager.encodeSettingsBool(key, v)
+            }
+
+            AppConfig.Pref.REPLACE_ROUTING -> {
                 val v = sp.getBoolean(key, false)
                 MmkvManager.encodeSettingsBool(key, v)
             }
